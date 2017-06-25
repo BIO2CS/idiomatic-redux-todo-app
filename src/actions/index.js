@@ -1,4 +1,5 @@
 import { v4 } from "node-uuid";
+import * as api from "../api";
 
 export const addTodo = (text) => {
   return {
@@ -14,3 +15,15 @@ export const toggleTodo = (id) => {
     id
   };
 };
+
+const receiveTodos = (filter, response) => ({
+  type: "RECEIVE_TODOS",
+  response,
+  filter
+});
+
+export const fetchTodos = (filter) => {
+  return api.fetchTodos(filter).then(response => {
+    return receiveTodos(filter, response);
+  })
+}
