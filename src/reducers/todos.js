@@ -1,69 +1,68 @@
 import { combineReducers } from "redux";
 
-const todo = (state, action) => {
-  switch(action.type) {
-    case "ADD_TODO":
-      return {
-        id: action.id,
-        text: action.text,
-        completed: false
-      };
-    case "TOGGLE_TODO":
-      if (state.id !== action.id) {
-        return state;
-      }
-      return {
-        ...state,
-        completed: !state.completed
-      }
-    default:
-      return state;
-  }
-};
-
 const byIds = (state = {}, action) => {
   switch(action.type) {
-    case "ADD_TODO":
-    case "TOGGLE_TODO":
-      return {
-        ...state,
-        [action.id]: todo(state[action.id], action)
-      };
+    case "RECEIVE_TODOS":
+      const nextState = {...state};
+      action.response.forEach(todo => {
+        nextState[todo.id] = todo;
+      })
+      return nextState;
     default:
       return state;
   }
 };
 
 const allIds = (state = [], action) => {
+  if (action.filter !== "all") {
+    return state;
+  }
   switch(action.type) {
-    case "ADD_TODO":
-      return [...state, action.id];
+    case "RECEIVE_TODOS":
+      return action.response.map(todo => todo.id);
     default:
       return state;
   }
 };
 
+const activeIds = (state = [], action) => {
+  if (action.filter !== "active") {
+    return state;
+  }
+  switch(action.type) {
+    case "RECEIVE_TODOS":
+      return action.response.map(todo => todo.id);
+    default:
+      return state;
+  }
+};
+
+const completedIds = (state = [], action) => {
+  if (action.filter !== "completed") {
+    return state;
+  }
+  switch(action.type) {
+    case "RECEIVE_TODOS":
+      return action.response.map(todo => todo.id);
+    default:
+      return state;
+  }
+};
+
+const idsByFilter = combineReducers({
+  all: allIds,
+  active: activeIds,
+  completed: completedIds
+})
+
 const todos = combineReducers({
   byIds,
-  allIds
+  idsByFilter
 });
 
 export default todos;
 
-const getAllIds = (state) => {
-  return state.allIds.map(id => state.byIds[id]);
-}
-
 export const getVisibleTodoList = (state, filter) => {
-  const allIds = getAllIds(state);
-  switch(filter) {
-    case "all":
-      return allIds;
-    case "completed":
-      return allIds.filter(todo => todo.completed);
-    case "active":
-      return allIds.filter(todo => !todo.completed);
-    default:
-      return allIds;
-  }
+  const ids = state.idsByFilter[filter];
+  return ids.map(id => state.byIds[id]);
 };
